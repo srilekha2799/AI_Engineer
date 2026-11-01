@@ -1,0 +1,82 @@
+
+import os
+from google import genai
+
+# 1. Read the API key securely from an environment variable.
+api_key = os.getenv("GEMINI_API_KEY")
+
+if not api_key:
+    raise ValueError(
+        "GEMINI_API_KEY is missing. "
+        "Set it in your terminal before running this program."
+    )
+
+# 2. Create the Gemini API client.
+client = genai.Client(api_key=api_key)
+
+# 3. Use the same source text in every experiment.
+source_text = """
+Machine learning is a branch of artificial intelligence that enables
+computers to learn patterns from data. In supervised learning, models
+learn from labeled examples. In unsupervised learning, models identify
+patterns in data without predefined labels. Machine learning is used in
+recommendation systems, fraud detection, healthcare, and image recognition.
+"""
+
+# 4. Define three prompts.
+# None of these prompts contains example input-output pairs.
+
+prompts = {
+    "Test 1 - Vague zero-shot": (
+        "Summarize this text:\n\n"
+        f"{source_text}"
+    ),
+
+    "Test 2 - Specific zero-shot": (
+        "Summarize the following text in simple English "
+        "for a first-year CSE student. Keep it under 80 words. "
+        "Preserve the main ideas and do not add unsupported facts.\n\n"
+        f"{source_text}"
+    ),
+
+    "Test 3 - Detailed zero-shot": (
+        "Task: Summarize the source text.\n"
+        "Audience: A first-year CSE student.\n"
+        "Language: Simple, beginner-friendly English.\n"
+        "Length: Under 80 words.\n"
+        "Requirements:\n"
+        "- Explain what machine learning is.\n"
+        "- Preserve the distinction between supervised "
+        "and unsupervised learning.\n"
+        "- Mention the applications listed in the source.\n"
+        "- Do not introduce unsupported facts.\n"
+        "Output format: One concise paragraph of plain text.\n\n"
+        f"Source text:\n{source_text}"
+    ),
+}
+
+# 5. Choose a model.
+# If this model ID is unavailable to your account,
+# replace it with a currently supported Gemini model ID.
+MODEL = "gemini-3.8-flash"
+
+# 6. Send each prompt to Gemini and display the response.
+for test_name, prompt in prompts.items():
+    print("\n" + "=" * 60)
+    print(test_name)
+    print("=" * 60)
+
+    try:
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+        )
+
+        if response.text:
+            print(response.text)
+        else:
+            print("No text was returned by the model.")
+
+    except Exception as error:
+        print(f"Request failed: {error}")
+        print("Check the model ID, API key, connection, and quota.")

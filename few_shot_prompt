@@ -1,0 +1,102 @@
+
+import os
+from google import genai
+
+# 1. Read the Gemini API key
+api_key = os.getenv("GEMINI_API_KEY")
+
+if not api_key:
+    raise ValueError("Please set GEMINI_API_KEY first.")
+
+# 2. Create the Gemini client
+client = genai.Client(api_key=api_key)
+
+# 3. Select the model
+MODEL = "gemini-3.8-flash"
+
+# 4. New customer review to classify
+new_review = (
+    "The phone has an amazing camera, "
+    "and the battery lasts all day!"
+)
+
+# 5. Zero-shot prompt
+zero_shot_prompt = f"""
+Classify the sentiment of this customer review.
+
+Choose one label:
+POSITIVE, NEGATIVE, or NEUTRAL.
+
+Return only the label.
+
+Review: {new_review}
+"""
+
+# 6. One-shot prompt
+one_shot_prompt = f"""
+Classify customer reviews as POSITIVE, NEGATIVE, or NEUTRAL.
+
+Example:
+Review: "The product quality is excellent."
+Sentiment: POSITIVE
+
+Now classify this review.
+
+Return only the label.
+
+Review: {new_review}
+"""
+
+# 7. Few-shot prompt
+few_shot_prompt = f"""
+Classify customer reviews as POSITIVE, NEGATIVE, or NEUTRAL.
+
+Follow these examples:
+
+Example 1:
+Review: "The product quality is excellent."
+Sentiment: POSITIVE
+
+Example 2:
+Review: "The product stopped working after one day."
+Sentiment: NEGATIVE
+
+Example 3:
+Review: "The package arrived this morning."
+Sentiment: NEUTRAL
+
+Now classify this new review.
+
+Return only the label.
+
+Review: {new_review}
+"""
+
+# 8. Store all three prompts
+prompts = {
+    "ZERO-SHOT": zero_shot_prompt,
+    "ONE-SHOT": one_shot_prompt,
+    "FEW-SHOT": few_shot_prompt,
+}
+
+# 9. Send prompts to Gemini
+for method, prompt in prompts.items():
+
+    print("\n" + "=" * 50)
+    print(method)
+    print("=" * 50)
+
+    try:
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+        )
+
+        if response.text:
+            print("Review:", new_review)
+            print("Predicted sentiment:", response.text.strip())
+        else:
+            print("No text response received.")
+
+    except Exception as error:
+        print("API request failed:", error)
